@@ -38,7 +38,7 @@ public class ConnectionHandler
                                 client.close();
                                 break;
                 
-                case "HEAD":    head(request);
+                case "HEAD":    head(request, requestFile);
                                 break;
                 
                 case "POST":    post(request, requestFile);
@@ -113,9 +113,52 @@ public class ConnectionHandler
         }   
     }
     
-    private void head(String[] arr)
+    private void head(String[] arr, String r)
     {
-        //TODO
+        //HTTP-Header ohne Nachrichtenrumpf wird gesendet.
+        try
+        {
+            path = suche(WEBROOT, new URL(r), false);
+            if(!path.equals("NOTFOUND"))//Gesuchter Pfad wurde gefunden.
+            {
+                File file = new File(path);
+                int fileLength = (int) file.length();
+                String content = getMIMEType(path);
+                byte[] send = readFileData(file, fileLength);
+                //Header erstellen und senden.
+                PrintWriter output = new PrintWriter(client.OutputStream());
+                output.println("HTTP/1.1 200 OK");
+                output.println("Server: JAVA HTTP SERVER from UNIAUFGABE : 1.0");
+                output.println("Date: " + new Date());
+                output.println("Content-Type: " + content);
+                output.println("Content-Length: " + fileLength);
+                output.println();
+                output.flusch();
+                output.close();
+            }
+            else//Pfad wurde nicht gefunden und der Header mit dem entsprechenden Status code wird gesendet.
+            {
+                try
+                {
+                    PrintWriter output = new PrintWriter(client.getOutputstream());
+                    output.println("HTTP/1.1 404 File Not Found");
+                    output.println("Date: " + new Date());
+                    //output.println("Content-type: " +content);
+                    //output.println("Content-length: " +fileLength);
+                    output.println();
+                    output.flush();
+                    output.close();
+                }
+                catch(Exception e)
+                {
+                    //TODO
+                }
+            }
+        }
+        catch(IOException e)
+        {
+            //TODO
+        }
     }
     
     private void cget()
